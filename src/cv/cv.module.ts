@@ -9,7 +9,7 @@ import { Cv } from './entities/cv.entity';
 import { CvRepository } from './repositories/cv.repository';
 import { DataSource } from 'typeorm';
 import { CvControllerV2 } from './cv.controller.v2';
-import { AuthMiddleware } from '../common/auth.middleware';
+import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { PaginationService } from '../common/pagination.service';
 import { MulterModule } from '@nestjs/platform-express';
 
