@@ -9,7 +9,6 @@ import { RequestWithUser } from "../interfaces/request.interface";
 export class AuthMiddleware implements NestMiddleware {
   
   use(req: RequestWithUser, res: Response, next: NextFunction) {
-    /*
     const token = req.headers["auth-user"]?.toString();
     console.log('AuthMiddleware triggered for:', req.url);
     if (!token) {
@@ -23,7 +22,7 @@ export class AuthMiddleware implements NestMiddleware {
     catch (error) {
       return res.status(401).json({ message: "Invalid token" });
     }
-    */
+
     next();
   }
 }

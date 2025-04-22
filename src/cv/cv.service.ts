@@ -11,6 +11,8 @@ import { PaginationInputDto } from '../common/dtos/pagination-input.dto';
 import { PaginationService } from '../common/pagination.service';
 import { PaginationResultDto } from '../common/dtos/pagination-result.dto';
 import { Role } from 'src/enums/role.enum';
+import { Select } from '@prisma/client/runtime/library';
+import { SelectQueryBuilder } from 'typeorm';
 
 @Injectable()
 export class CvService extends BaseService<Cv> {
@@ -45,40 +47,50 @@ export class CvService extends BaseService<Cv> {
   }
 
     
-  async search(filter: FilterDto ,user : any ,relations: string[] = []): Promise<Cv[] | null> { 
-    if(user.role === Role.ADMIN){
-      return (await this.cvRepository.search(filter , relations)).getMany();
-    }
-      const userdb = await this.userService.findOne(user.id) || undefined;
-      return (await this.cvRepository.search(filter , relations , userdb)).getMany();
-  }
+  // async search(filter: FilterDto ,user : any ,relations: string[] = []): Promise<Cv[] | null> { 
+  //   if(user.role === Role.ADMIN){
+  //     return (await this.cvRepository.search(filter , relations)).getMany();
+  //   }
+  //     const userdb = await this.userService.findOne(user.id) || undefined;
+  //     return (await this.cvRepository.search(filter , relations , userdb)).getMany();
+  // }
 
-  async findAllPaginated(
-    paginationInputDto : PaginationInputDto,
-    user : any,
-    relations: string[] = [],
-  ): Promise<PaginationResultDto<Cv>> {
+  // async findAllPaginated(
+  //   paginationInputDto : PaginationInputDto,
+  //   user : any,
+  //   relations: string[] = [],
+  // ): Promise<PaginationResultDto<Cv>> {
 
-    if(user.role === Role.ADMIN){
-      return await this.paginationService.paginate<Cv>(
-        this.cvRepository,
-        paginationInputDto,
-        relations,
-      );
-    }
+  //   if(user.role === Role.ADMIN){
+  //     return await this.paginationService.paginate<Cv>(
+  //       this.cvRepository.createQueryBuilder('cv'),
+  //       paginationInputDto,
+  //       relations,
+  //     );
+  //   }
 
-    const userdb = await this.userService.findOne(user.id) || undefined;
+  //   const userdb = await this.userService.findOne(user.id) || undefined;
 
-   return await this.paginationService.paginate<Cv>(
-    this.cvRepository,
-    paginationInputDto,
-    relations,
-    userdb,
+  //  return await this.paginationService.paginate<Cv>(
+  //   this.cvRepository,
+  //   paginationInputDto,
+  //   relations,
+  //   userdb,
     
    
-  );
-      
+  // );   
+  // }
+
+  async findAllCvs(query : FilterDto & PaginationInputDto, user: any, relations: string[] = []) {   
+    let searchquery = await this.cvRepository.search(query ,relations, user);
+
+    return this.paginationService.paginate<Cv>(
+      searchquery,
+      query as PaginationInputDto,
+      relations,
+    );
   }
+  
 
   
 
@@ -141,12 +153,15 @@ export class CvService extends BaseService<Cv> {
 
 
   async uploadFile(id: number, file: Express.Multer.File) {
+    const cv = await this.cvRepository.findOne({ where: { id }, relations: ['user'] });
     if (!file) {
       throw new HttpException('No file provided', 400);
     }
-    const cv = await this.findOne(id);
     if (!cv) {
       throw new HttpException('CV not found', 404);
+    }
+    if (!this.userService.IsOwnerOrAdmin(cv.user , cv)) {
+      throw new HttpException('Unauthorized access to this CV', 403);
     }
     this.update(id, { filePath: file.path });
     return cv;

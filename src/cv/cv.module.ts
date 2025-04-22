@@ -12,6 +12,7 @@ import { CvControllerV2 } from './cv.controller.v2';
 import { AuthMiddleware } from '../middlewares/auth.middleware';
 import { PaginationService } from '../common/pagination.service';
 import { MulterModule } from '@nestjs/platform-express';
+import { CvController } from './cv.controller';
 
 
 
@@ -22,7 +23,7 @@ import { MulterModule } from '@nestjs/platform-express';
     TypeOrmModule.forFeature([Cv]),
     MulterModule.register()
   ],
-  controllers: [ CvControllerV2],
+  controllers: [ CvControllerV2,CvController],
   providers: [
     CvService, 
     CvRepository,
@@ -36,8 +37,8 @@ export class CvModule implements NestModule {
   consumer
     .apply(AuthMiddleware)
     .forRoutes(
-      { path: 'cv/*path', version: '2', method: RequestMethod.ALL },
-      { path: 'cv', version: '2', method: RequestMethod.ALL }
+      { path: 'cv/*path', method: RequestMethod.ALL },
+      { path: 'cv', method: RequestMethod.ALL }
     );
 
       }    

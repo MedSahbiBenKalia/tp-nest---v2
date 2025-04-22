@@ -26,7 +26,7 @@ export class Cv {
     job: string;
 
     @Column({ nullable: true })
-    imagePath : string;
+    filePath : string;
     
     @ManyToOne(() => User, (user) => user.Cvs )
     user: User; 
