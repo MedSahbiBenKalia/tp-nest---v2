@@ -13,6 +13,9 @@ import { PaginationResultDto } from '../common/dtos/pagination-result.dto';
 import { Role } from 'src/enums/role.enum';
 import { Select } from '@prisma/client/runtime/library';
 import { SelectQueryBuilder } from 'typeorm';
+import { filter } from 'rxjs';
+import { filterByUser } from 'src/common/filter-by-user';
+
 
 @Injectable()
 export class CvService extends BaseService<Cv> {
@@ -46,46 +49,13 @@ export class CvService extends BaseService<Cv> {
     
   }
 
-    
-  // async search(filter: FilterDto ,user : any ,relations: string[] = []): Promise<Cv[] | null> { 
-  //   if(user.role === Role.ADMIN){
-  //     return (await this.cvRepository.search(filter , relations)).getMany();
-  //   }
-  //     const userdb = await this.userService.findOne(user.id) || undefined;
-  //     return (await this.cvRepository.search(filter , relations , userdb)).getMany();
-  // }
 
-  // async findAllPaginated(
-  //   paginationInputDto : PaginationInputDto,
-  //   user : any,
-  //   relations: string[] = [],
-  // ): Promise<PaginationResultDto<Cv>> {
-
-  //   if(user.role === Role.ADMIN){
-  //     return await this.paginationService.paginate<Cv>(
-  //       this.cvRepository.createQueryBuilder('cv'),
-  //       paginationInputDto,
-  //       relations,
-  //     );
-  //   }
-
-  //   const userdb = await this.userService.findOne(user.id) || undefined;
-
-  //  return await this.paginationService.paginate<Cv>(
-  //   this.cvRepository,
-  //   paginationInputDto,
-  //   relations,
-  //   userdb,
-    
-   
-  // );   
-  // }
 
   async findAllCvs(query : FilterDto & PaginationInputDto, user: any, relations: string[] = []) {   
-    let searchquery = await this.cvRepository.search(query ,relations, user);
-
+    let searchquery = await this.cvRepository.search(query ,relations);
+    let filterByUserQuery=filterByUser(searchquery, user);
     return this.paginationService.paginate<Cv>(
-      searchquery,
+      filterByUserQuery,
       query as PaginationInputDto,
       relations,
     );
@@ -169,3 +139,6 @@ export class CvService extends BaseService<Cv> {
 
 }    
   
+
+
+

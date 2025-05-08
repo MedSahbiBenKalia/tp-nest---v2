@@ -11,12 +11,9 @@ export class CvRepository extends Repository<Cv> {
         super(Cv, dataSource.createEntityManager());
       }
     
-    async search(filter: FilterDto, relations: string[] = [] , user? : User): Promise<SelectQueryBuilder<Cv>> {
+    async search(filter: FilterDto, relations: string[] = [] ,): Promise<SelectQueryBuilder<Cv>> {
         const query = this.createQueryBuilder('cv');
 
-        if (user && Object.keys(user).length > 0 && user.role.includes(Role.ADMIN) === false) {
-            query.where('cv.user = :user', { user: user.id });
-        }
         if(filter.age || filter.criteria){
             query.andWhere(new Brackets(subquery => {
                 if (filter.criteria) {

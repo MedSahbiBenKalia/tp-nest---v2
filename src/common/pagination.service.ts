@@ -11,7 +11,6 @@ export class PaginationService {
    * @param repository - The TypeORM repository to paginate.
    * @param paginationInputDto - The pagination input DTO containing page and limit.
    * @param relations - Optional array of relations to include in the query.
-   * @param user - Optional user object for filtering results.
    * @returns A promise that resolves to a PaginationResultDto containing paginated data and metadata.
    */
   async paginate<T extends ObjectLiteral>(
@@ -23,9 +22,10 @@ export class PaginationService {
     const { page = 1, limit = 10 } = paginationInputDto;
     const skip = (page - 1) * limit;
 
-    const where: any = {};
-
-    const [data,total] = await query.skip(skip).take(limit).getManyAndCount();
+    const [data, total] = await query
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
 
     const lastPage = Math.ceil(total / limit);
 
