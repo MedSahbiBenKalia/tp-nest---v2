@@ -9,6 +9,8 @@ import { User } from '../decorators/user.decorator';
 import * as PATH from 'path';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CvEventType } from 'src/enums/cv-event';
 
 @Controller
     (
@@ -18,12 +20,33 @@ import { diskStorage } from 'multer';
         }
     )
 export class CvControllerV2 {
-    constructor(private readonly cvService: CvService) { }
+    constructor(
+      private readonly cvService: CvService,
+      private readonly eventEmitter: EventEmitter2,
+    ) { }
     @UseGuards(JwtAuthGuard)
     @Post()
-    create(@User() user, @Body() createCvDto: CreateCvDto) {
-        console.log(createCvDto)
-        return this.cvService.create({ ...createCvDto, userId: user.id }); //mrgl
+    async create(@User() user, @Body() createCvDto: CreateCvDto) {
+        
+        try{
+          let cv = await this.cvService.create({ ...createCvDto, userId: user.id }); //mrgl
+          if (cv) {
+            this.eventEmitter.emit('cv.created', {
+              cvId: cv.id,
+              userId: user.id,
+              eventType: CvEventType.CREATE,
+              metadata: { ...createCvDto, userId: user.id },
+            });
+            return cv;
+          }
+          else {
+            throw new HttpException('error in create', 400);
+          }
+
+        }catch(e){
+          console.log(e);
+          throw new HttpException('error in create', 400);
+        }
     }
 
     @Post(':id/upload')
@@ -73,27 +96,69 @@ export class CvControllerV2 {
     @UseGuards(JwtAuthGuard)
     @Get() //mrgl
     findAll(@User() user ,@Query() query: FilterDto & PaginationInputDto) {
+     
         return this.cvService.findAllCvs(query , user , ['user', 'skills']);
     }
 
     @UseGuards(JwtAuthGuard)
     @Get(':id') //mrgl
-    findOne(@Param('id', ParseIntPipe) id: number , @User() user) {
-        return this.cvService.getCvById(+id , user ,['user', 'skills']);
+    async findOne(@Param('id', ParseIntPipe) id: number , @User() user) {
+        let cv = await this.cvService.getCvById(+id , user ,['user', 'skills']);
+        if (!cv) {
+            throw new ForbiddenException('cv not found or you are not the owner of this cv');
+        }
+        console.log("emitting event");
+        this.eventEmitter.emit('cv.viewed', {
+              cvId: cv.id,
+              userId: user.id,
+              eventType: CvEventType.VIEW,
+        }
+        );
+        return cv;
     }
 
     @UseGuards(JwtAuthGuard)
     @Patch(':id') //mrgl
     async update(@User() user, @Param('id' , ParseIntPipe) id: number, @Body() updateCvDto: UpdateCvDto) {
-        
-        return this.cvService.updateCv(+id, user,updateCvDto);
+        let oldcv = await this.cvService.getCvById(+id , user , ['user', 'skills']);
+        if (!oldcv) {
+            throw new ForbiddenException('cv not found or you are not the owner of this cv');
+        }
+        let newCv = await this.cvService.updateCv(+id, user,updateCvDto);
+        if (newCv) {
+            this.eventEmitter.emit('cv.update', {
+              cvId: newCv.id,
+              userId: user.id,
+              eventType: CvEventType.UPDATE,
+              metadata: {
+                OldVersion: oldcv, 
+                NewVersion: newCv, 
+                },
+            });
+            return newCv;
+          }
+          else {
+            throw new HttpException('error in update', 400);
+          }
     }
 
     @UseGuards(JwtAuthGuard)
     @Delete(':id') //mrgl
     async remove(@Param('id' , ParseIntPipe) id: number , @User() user) {
-       
-        return this.cvService.removeCv(+id , user);
+
+     
+        try{
+          this.cvService.removeCv(+id , user);
+          this.eventEmitter.emit('cv.delete', {
+            cvId: id,
+            userId: user.id,
+            eventType: CvEventType.DELETE,
+          });
+          return { message: 'cv deleted successfully' };
+        }catch(e){
+          console.log(e);
+          throw new HttpException('error in delete', 400);
+        }
     }
 
 }
