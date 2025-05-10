@@ -26,7 +26,7 @@ export class CvEventController {
   }
 
   @Sse('events')
-  stramEvents(@User() user) : Observable<CvEventSeeResponse> {
+  stramEvents(@User() user) : Observable<any> {
     console.log("stream events ****************************");
     console.log("user in sse************************", user);
     const source = fromEvent(this.emitter, 'cv.*');
@@ -40,7 +40,7 @@ export class CvEventController {
           eventType: event.eventType,
         } as CvEventSeeResponse;
         console.log("eventType in sse ******************************", eventType);
-        return eventType;  
+        return JSON.stringify(eventType);
         }
       )
     );

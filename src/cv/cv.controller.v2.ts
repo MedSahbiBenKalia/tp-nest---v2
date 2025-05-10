@@ -11,6 +11,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CvEventType } from 'src/enums/cv-event';
+import { APP_EVENTS } from '../cv-event/app_events';
 
 @Controller
     (
@@ -31,7 +32,7 @@ export class CvControllerV2 {
         try{
           let cv = await this.cvService.create({ ...createCvDto, userId: user.id }); //mrgl
           if (cv) {
-            this.eventEmitter.emit('cv.created', {
+            this.eventEmitter.emit(APP_EVENTS.CV_MODIFIED, {
               cvId: cv.id,
               userId: user.id,
               eventType: CvEventType.CREATE,
@@ -108,7 +109,7 @@ export class CvControllerV2 {
             throw new ForbiddenException('cv not found or you are not the owner of this cv');
         }
         console.log("emitting event");
-        this.eventEmitter.emit('cv.viewed', {
+        this.eventEmitter.emit(APP_EVENTS.CV_VIEWED, {
               cvId: cv.id,
               userId: user.id,
               eventType: CvEventType.VIEW,
@@ -126,7 +127,7 @@ export class CvControllerV2 {
         }
         let newCv = await this.cvService.updateCv(+id, user,updateCvDto);
         if (newCv) {
-            this.eventEmitter.emit('cv.update', {
+            this.eventEmitter.emit(APP_EVENTS.CV_MODIFIED, {
               cvId: newCv.id,
               userId: user.id,
               eventType: CvEventType.UPDATE,
@@ -149,7 +150,7 @@ export class CvControllerV2 {
      
         try{
           this.cvService.removeCv(+id , user);
-          this.eventEmitter.emit('cv.delete', {
+          this.eventEmitter.emit(APP_EVENTS.CV_MODIFIED, {
             cvId: id,
             userId: user.id,
             eventType: CvEventType.DELETE,

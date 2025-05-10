@@ -9,11 +9,7 @@ import { CvRepository } from './repositories/cv.repository';
 import { FilterDto } from './dto/filter.dto';
 import { PaginationInputDto } from '../common/dtos/pagination-input.dto';
 import { PaginationService } from '../common/pagination.service';
-import { PaginationResultDto } from '../common/dtos/pagination-result.dto';
 import { Role } from 'src/enums/role.enum';
-import { Select } from '@prisma/client/runtime/library';
-import { SelectQueryBuilder } from 'typeorm';
-import { filter } from 'rxjs';
 import { filterByUser } from 'src/common/filter-by-user';
 
 
