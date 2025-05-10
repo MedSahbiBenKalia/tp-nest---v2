@@ -28,7 +28,7 @@ function fromWildcardEvent<T = any>(
   });
 }
 
-@Controller('events')
+@Controller('sse')
 export class SseGateway {
   constructor(private eventEmitter: EventEmitter2) {}
 
