@@ -40,7 +40,7 @@ export class SseGateway {
     // Subscribe to all *.modified events
     const modified$ = fromWildcardEvent(this.eventEmitter, '*.modified').pipe(
       filter(({ payload }) =>
-        user.role === 'admin' || user.id === payload.userId,
+        user.role.includes('admin') || user.id === payload.userId,
       ),
       map(({ event, payload }) => ({
         type: event,

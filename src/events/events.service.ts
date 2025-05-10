@@ -12,5 +12,10 @@ export class AppEventService {
       data,
       userId,
     });
+    console.log(`Event emitted: ${eventName}`, {
+      action,
+      data,
+      userId,
+    })
   }
 }

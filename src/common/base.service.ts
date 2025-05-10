@@ -15,6 +15,15 @@ async findOne(id: number, relations: string[] = []): Promise<T | null> {
     where: { id } as any,
     relations,
   });
+  if (entity){
+    const eventName = `${this.repository.metadata.name}`;
+    const action = 'findOne';
+    let userId = null;
+    if (this.userIdFieldName) userId=entity[this.userIdFieldName];
+    const data = { ...entity };
+    if (this.userIdFieldName) delete data[this.userIdFieldName];
+    this.eventservice.emitEntityModified(eventName, action, data, userId);
+  }
   return entity;
 }
 
@@ -29,6 +38,7 @@ async findOne(id: number, relations: string[] = []): Promise<T | null> {
       const data = { ...createdEntity };
       if (this.userIdFieldName) delete data[this.userIdFieldName];
       this.eventservice.emitEntityModified(eventName, action, data, userId);
+
     }
     return createdEntity;
   }
