@@ -11,6 +11,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { CvEventModule } from './cv-event/cv-event.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { MessageModule } from './message/message.module';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
     TypeOrmModule.forRoot(AppDataSource.options), 
     UserModule, 
     CvModule, 
-    SkillModule, AuthModule, CvEventModule
+    SkillModule, AuthModule, CvEventModule, MessageModule
   ],
   controllers: [AppController],
   providers: [AppService],
