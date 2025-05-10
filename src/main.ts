@@ -16,10 +16,10 @@ async function bootstrap() {
     }),
   );
   app.enableCors({
-    origin: '*', // Autoriser toutes les origines
+    origin: '*', 
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['*'], // Autoriser tous les headers
-    credentials: true, // Désactiver les credentials pour le mode permissif
+    allowedHeaders: ['*'], 
+    credentials: true, 
     exposedHeaders: ['*'],
   });
 

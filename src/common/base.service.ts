@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Repository } from "typeorm";
 
 @Injectable()
-export class BaseService<T extends { id: number }> { // we extends the entity with id property
+export class BaseService<T extends { id: number }> { 
   constructor(private readonly repository: Repository<T>) {}
 
   async findAll(relations: string[] = []): Promise<T[]> {

@@ -32,13 +32,13 @@ export class CvService extends BaseService<Cv> {
   async create(createCvDto: CreateCvDto) {
     const { userId, skillIds = [], ...cvData } = createCvDto;
 
-    // Vérifier si l'utilisateur existe
+    
     const user = await this.userService.findOne(userId);
     if (!user) {
       throw new Error('User not found');
     }
 
-    // Vérifier si les compétences existent
+    
     const skills = await this.skillService.findByIds(skillIds);
     if (skills.length !== skillIds.length) {
       throw new Error('Some skills not found');

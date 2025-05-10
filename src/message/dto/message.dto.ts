@@ -1,6 +1,6 @@
 import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
-// Dans message.dto.ts
+
 export class CreateMessageDto {
   @IsString()
   @IsNotEmpty()
@@ -18,7 +18,7 @@ export class CreateMessageDto {
 export class AddReactionDto {
   @IsString()
   @IsNotEmpty()
-  type: string; // 'like', 'heart', 'smile', etc.
+  type: string; 
 }
 
 export class CreateCommentDto {

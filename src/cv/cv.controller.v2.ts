@@ -81,7 +81,7 @@ export class CvControllerV2 {
         @UploadedFile(new ParseFilePipe(
           {
             validators: [
-              new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
+              new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), 
             ]
           }
         )) file: Express.Multer.File) {

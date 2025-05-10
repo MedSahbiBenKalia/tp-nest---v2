@@ -16,12 +16,12 @@ export class Message {
   @JoinColumn({ name: 'senderId' })
   sender: User;
 
-  // Ajout du destinataire
+  
   @ManyToOne(() => User, { eager: true, nullable: true })
   @JoinColumn({ name: 'receiverId' })
   receiver: User;
 
-  // Champ pour déterminer si c'est un message privé ou public
+  
   @Column({ type: 'boolean', default: false })
   isPrivate: boolean;
 

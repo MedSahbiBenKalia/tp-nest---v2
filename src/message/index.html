@@ -20,12 +20,15 @@
 </head>
 <body>
 <h1>Test complet WebSocket avec JWT</h1>
-<input type="text" id="userToken" placeholder="Entrez votre token JWT">
-<button id="setTokenBtn">Définir le token</button>
+<div class="panel">
+  <h2>Configuration</h2>
+  <input type="text" id="userToken" placeholder="Entrez votre token JWT">
+  <button id="setTokenBtn">Connecter</button>
+</div>
 
 <div class="panel">
   <h2>Connexion</h2>
-  <p id="status">Connexion en cours...</p>
+  <p id="status">Non connecté</p>
   <p id="userInfo"></p>
 </div>
 
@@ -36,7 +39,7 @@
     <label><input type="checkbox" id="isPrivate"> Message privé</label>
     <input type="number" id="receiverId" placeholder="ID du destinataire" disabled>
   </div>
-  <button id="sendMessageBtn">Envoyer</button>
+  <button id="sendMessageBtn" disabled>Envoyer</button>
 </div>
 
 <div class="panel">
@@ -49,7 +52,7 @@
   <div>
     <input type="number" id="reactMessageId" placeholder="ID du message">
     <input type="text" id="reactionEmoji" placeholder="Emoji (ex: 👍)">
-    <button id="addReactionBtn">Ajouter réaction</button>
+    <button id="addReactionBtn" disabled>Ajouter réaction</button>
   </div>
 </div>
 
@@ -58,52 +61,88 @@
   <div>
     <input type="number" id="commentMessageId" placeholder="ID du message">
     <textarea id="commentContent" placeholder="Votre commentaire"></textarea>
-    <button id="addCommentBtn">Ajouter commentaire</button>
+    <button id="addCommentBtn" disabled>Ajouter commentaire</button>
   </div>
 </div>
 
 <div class="panel">
   <h2>Utilisateurs connectés</h2>
-  <button id="getUsersBtn">Rafraîchir la liste</button>
+  <button id="getUsersBtn" disabled>Rafraîchir la liste</button>
   <ul id="connectedUsers"></ul>
 </div>
 
 <script>
   
   let socket;
+  let isConnected = false;
 
   
   const statusEl = document.getElementById('status');
   const userInfoEl = document.getElementById('userInfo');
   const messagesEl = document.getElementById('messages');
   const connectedUsersEl = document.getElementById('connectedUsers');
-  document.getElementById('setTokenBtn').addEventListener('click', () => {
+  const sendMessageBtn = document.getElementById('sendMessageBtn');
+  const addReactionBtn = document.getElementById('addReactionBtn');
+  const addCommentBtn = document.getElementById('addCommentBtn');
+  const getUsersBtn = document.getElementById('getUsersBtn');
+  
+  
+  document.getElementById('setTokenBtn').addEventListener('click', connectWithToken);
+  document.getElementById('isPrivate').addEventListener('change', function() {
+    document.getElementById('receiverId').disabled = !this.checked;
+  });
+  sendMessageBtn.addEventListener('click', sendMessage);
+  addReactionBtn.addEventListener('click', addReaction);
+  addCommentBtn.addEventListener('click', addComment);
+  getUsersBtn.addEventListener('click', getConnectedUsers);
+
+  
+  function connectWithToken() {
     const inputToken = document.getElementById('userToken').value;
+    
+    
     if (!inputToken) {
       alert('Veuillez entrer un token JWT valide');
       return;
     }
+
     
-    token = inputToken;
-    alert('Token défini avec succès');
+    if (socket) {
+      socket.disconnect();
+    }
+
+    
+    statusEl.textContent = 'Connexion en cours...';
+    statusEl.className = '';
 
     
     socket = io('http://localhost:3000', {
-      auth: {
-        token: token
-      }
+      auth: { token: inputToken }
     });
 
     
+    setupSocketListeners();
+  }
+
+  
+  function setupSocketListeners() {
+    
     socket.on('connect', () => {
-      console.log('✅ Connecté');
-      console.log(socket);
+      console.log('✅ Connecté au serveur');
       statusEl.textContent = '✅ Connecté';
       statusEl.className = 'success';
+      isConnected = true;
+      
+      
+      toggleButtons(true);
 
       
-      const decodedToken = parseJwt(token);
-      userInfoEl.textContent = `Connecté en tant que: ${decodedToken.username} (ID: ${decodedToken.id})`;
+      try {
+        const decodedToken = parseJwt(document.getElementById('userToken').value);
+        userInfoEl.textContent = `Connecté en tant que: ${decodedToken.username} (ID: ${decodedToken.id})`;
+      } catch (err) {
+        console.error('Erreur de décodage du token:', err);
+      }
 
       
       getConnectedUsers();
@@ -114,6 +153,8 @@
       console.error('❌ Erreur de connexion:', err.message);
       statusEl.textContent = '❌ Connexion échouée: ' + err.message;
       statusEl.className = 'error';
+      isConnected = false;
+      toggleButtons(false);
     });
 
     
@@ -121,11 +162,13 @@
       console.log('🔌 Déconnecté');
       statusEl.textContent = '🔌 Déconnecté';
       statusEl.className = 'error';
+      isConnected = false;
+      toggleButtons(false);
     });
 
     
     socket.on('newMessage', (message) => {
-      console.log('📩 Nouveau message:', message);
+      console.log('📩 Nouveau message reçu:', message);
       displayMessage(message);
     });
 
@@ -146,71 +189,23 @@
       console.log('👥 Utilisateurs connectés:', users);
       displayConnectedUsers(users);
     });
-  });
+  }
 
   
-  socket.on('connect', () => {
-    console.log('✅ Connecté');
-    statusEl.textContent = '✅ Connecté';
-    statusEl.className = 'success';
-
-    
-    const decodedToken = parseJwt(token);
-    userInfoEl.textContent = `Connecté en tant que: ${decodedToken.username} (ID: ${decodedToken.id})`;
-
-    
-    getConnectedUsers();
-  });
-
-  
-  socket.on('connect_error', (err) => {
-    console.error('❌ Erreur de connexion:', err.message);
-    statusEl.textContent = '❌ Connexion échouée: ' + err.message;
-    statusEl.className = 'error';
-  });
-
-  
-  socket.on('disconnect', () => {
-    console.log('🔌 Déconnecté');
-    statusEl.textContent = '🔌 Déconnecté';
-    statusEl.className = 'error';
-  });
-
-  
-  socket.on('newMessage', (message) => {
-    console.log('📩 Nouveau message:', message);
-    displayMessage(message);
-  });
-
-  
-  socket.on('messageReaction', (data) => {
-    console.log('🔄 Réaction mise à jour:', data);
-    updateMessageReactions(data.messageId, data.reactions);
-  });
-
-  
-  socket.on('messageComment', (data) => {
-    console.log('💬 Commentaire ajouté:', data);
-    updateMessageComments(data.messageId, data.comments);
-  });
-
-  
-  socket.on('connectedUsers', (users) => {
-    console.log('👥 Utilisateurs connectés:', users);
-    displayConnectedUsers(users);
-  });
-
-  
-  document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
-  document.getElementById('addReactionBtn').addEventListener('click', addReaction);
-  document.getElementById('addCommentBtn').addEventListener('click', addComment);
-  document.getElementById('getUsersBtn').addEventListener('click', getConnectedUsers);
-  document.getElementById('isPrivate').addEventListener('change', function() {
-    document.getElementById('receiverId').disabled = !this.checked;
-  });
+  function toggleButtons(enabled) {
+    sendMessageBtn.disabled = !enabled;
+    addReactionBtn.disabled = !enabled;
+    addCommentBtn.disabled = !enabled;
+    getUsersBtn.disabled = !enabled;
+  }
 
   
   function sendMessage() {
+    if (!isConnected) {
+      alert('Vous devez être connecté pour envoyer un message');
+      return;
+    }
+
     const content = document.getElementById('messageContent').value;
     const isPrivate = document.getElementById('isPrivate').checked;
     const receiverId = document.getElementById('receiverId').value;
@@ -238,6 +233,11 @@
 
   
   function addReaction() {
+    if (!isConnected) {
+      alert('Vous devez être connecté pour ajouter une réaction');
+      return;
+    }
+
     const messageId = parseInt(document.getElementById('reactMessageId').value);
     const emoji = document.getElementById('reactionEmoji').value;
 
@@ -248,7 +248,7 @@
 
     socket.emit('addReaction', {
       messageId: messageId,
-      reaction: { emoji: emoji }
+      reaction: { type : emoji }
     }, (response) => {
       if (response.status === 'success') {
         console.log('Réaction ajoutée:', response.reactions);
@@ -262,6 +262,11 @@
 
   
   function addComment() {
+    if (!isConnected) {
+      alert('Vous devez être connecté pour ajouter un commentaire');
+      return;
+    }
+
     const messageId = parseInt(document.getElementById('commentMessageId').value);
     const content = document.getElementById('commentContent').value;
 
@@ -286,6 +291,11 @@
 
   
   function getConnectedUsers() {
+    if (!isConnected) {
+      alert('Vous devez être connecté pour voir les utilisateurs');
+      return;
+    }
+    
     socket.emit('getConnectedUsers');
   }
 
@@ -300,7 +310,7 @@
     html += `<div>ID: ${message.id} ${message.isPrivate ? '(Privé)' : ''}</div>`;
 
     if (message.reactions && message.reactions.length > 0) {
-      html += '<div>Réactions: ';
+      html += '<div class="reactions">Réactions: ';
       message.reactions.forEach(r => {
         html += `<span class="reaction">${r.emoji} (${r.count})</span>`;
       });
@@ -308,7 +318,7 @@
     }
 
     if (message.comments && message.comments.length > 0) {
-      html += '<div>Commentaires:';
+      html += '<div class="comments">Commentaires:';
       message.comments.forEach(c => {
         html += `<div class="comment"><strong>${c.user.username}</strong>: ${c.content}</div>`;
       });
@@ -323,14 +333,20 @@
   function updateMessageReactions(messageId, reactions) {
     const messageDiv = document.getElementById(`message-${messageId}`);
     if (messageDiv) {
-      const reactionsDiv = messageDiv.querySelector('div:has(.reaction)');
-      if (reactionsDiv) {
-        let html = 'Réactions: ';
-        reactions.forEach(r => {
-          html += `<span class="reaction">${r.emoji} (${r.count})</span>`;
-        });
-        reactionsDiv.innerHTML = html;
+      
+      let reactionsDiv = messageDiv.querySelector('.reactions');
+      if (!reactionsDiv) {
+        reactionsDiv = document.createElement('div');
+        reactionsDiv.className = 'reactions';
+        messageDiv.appendChild(reactionsDiv);
       }
+
+      
+      let html = 'Réactions: ';
+      reactions.forEach(r => {
+        html += `<span class="reaction">${r.type} 1</span>`;
+      });
+      reactionsDiv.innerHTML = html;
     }
   }
 
@@ -338,18 +354,20 @@
   function updateMessageComments(messageId, comments) {
     const messageDiv = document.getElementById(`message-${messageId}`);
     if (messageDiv) {
-      let commentsDiv = messageDiv.querySelector('div:has(.comment)');
+      
+      let commentsDiv = messageDiv.querySelector('.comments');
       if (!commentsDiv) {
         commentsDiv = document.createElement('div');
-        commentsDiv.textContent = 'Commentaires:';
+        commentsDiv.className = 'comments';
         messageDiv.appendChild(commentsDiv);
       }
 
       
-      commentsDiv.innerHTML = 'Commentaires:';
+      let html = 'Commentaires:';
       comments.forEach(c => {
-        commentsDiv.innerHTML += `<div class="comment"><strong>${c.user.username}</strong>: ${c.content}</div>`;
+        html += `<div class="comment"><strong>${c.user.username}</strong>: ${c.content}</div>`;
       });
+      commentsDiv.innerHTML = html;
     }
   }
 

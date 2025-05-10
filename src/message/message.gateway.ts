@@ -12,13 +12,13 @@ import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { JwtPayloadInterface } from 'src/auth/interfaces/payload.interface';
 import { AddReactionDto, CreateCommentDto, CreateMessageDto } from './dto/message.dto';
-import jwt_decode from 'jwt-decode';  // Importation correcte
+import jwt_decode from 'jwt-decode';  
 
 @WebSocketGateway({
   cors: {
-    origin: '*', // Autoriser toutes les origines
+    origin: '*', 
     methods: ['GET', 'POST'],
-    allowedHeaders: ['*'], // Autoriser tous les headers
+    allowedHeaders: ['*'], 
     credentials: true,
   }
 })
@@ -26,7 +26,7 @@ export class MessageGateway {
   @WebSocketServer()
   server: Server;
 
-  // Map pour suivre les connexions socket par ID utilisateur
+  
   private userSockets: Map<number, string> = new Map();
 
   constructor(
@@ -36,29 +36,30 @@ export class MessageGateway {
 
   async handleConnection(client: Socket) {
     try {
-      const token = client.handshake.auth.token; // Récupérer le token JWT depuis le handshake
+      const token = client.handshake.auth.token; 
 
       if (!token) {
-        // Si aucun token n'est fourni, déconnecter le client
+        
         client.disconnect();
         throw new Error('Token JWT manquant');
       }
 
-      // Décodez le token JWT pour obtenir les informations utilisateur
+      
       let jwtDecode = jwt_decode;
       const decodedToken = this.jwtService.decode(token);
 
-      // Vous pouvez valider la signature du JWT ici, par exemple :
-      // const decodedToken = this.jwtService.verify(token);
+      
+      
 
-      // Ajouter les informations utilisateur au client
+      
       client.data.user = decodedToken;
+    this.userSockets.set(decodedToken.id, client.id);
 
       console.log('Utilisateur connecté :', client.data.user);
 
     } catch (error) {
       console.error('Erreur de connexion WebSocket:', error.message);
-      client.disconnect(); // Déconnecter le client si une erreur se produit
+      client.disconnect(); 
       throw new Error('Erreur d\'authentification : ' + error.message);
     }
   }
@@ -72,18 +73,19 @@ export class MessageGateway {
       const message = await this.messageService.createMessage(userId, createMessageDto);
 
       if (message.isPrivate && message.receiver) {
-        // Si c'est un message privé, l'envoyer seulement à l'expéditeur et au destinataire
+        
         const receiverSocketId = this.userSockets.get(message.receiver.id);
-
-        // Envoyer à l'expéditeur
+console.log('receiverSocketId', receiverSocketId)
+        
         client.emit('newMessage', message);
 
-        // Envoyer au destinataire s'il est connecté
+        
         if (receiverSocketId) {
+          console.log('receiverSocketId ethenya', receiverSocketId)
           this.server.to(receiverSocketId).emit('newMessage', message);
         }
       } else {
-        // Message public, broadcast à tous les clients
+        
         this.server.emit('newMessage', message);
       }
 
@@ -106,13 +108,13 @@ export class MessageGateway {
         data.reaction,
       );
 
-      // Vérifier si c'est un message privé
+      
       if (message.isPrivate && message.receiver) {
-        // Envoyer la mise à jour seulement à l'expéditeur et au destinataire
+        
         const senderSocketId = this.userSockets.get(message.sender.id);
         const receiverSocketId = this.userSockets.get(message.receiver.id);
 
-        // Mettre à jour pour l'expéditeur
+        
         if (senderSocketId) {
           this.server.to(senderSocketId).emit('messageReaction', {
             messageId: message.id,
@@ -120,7 +122,7 @@ export class MessageGateway {
           });
         }
 
-        // Mettre à jour pour le destinataire
+        
         if (receiverSocketId) {
           this.server.to(receiverSocketId).emit('messageReaction', {
             messageId: message.id,
@@ -128,7 +130,7 @@ export class MessageGateway {
           });
         }
       } else {
-        // Message public, informer tous les clients
+        
         this.server.emit('messageReaction', {
           messageId: message.id,
           reactions: message.reactions,
@@ -150,16 +152,16 @@ export class MessageGateway {
       const userId = client.data.user.id;
       const comment = await this.messageService.addComment(userId, createCommentDto);
 
-      // Récupérer le message mis à jour
+      
       const message = await this.messageService.findOne(createCommentDto.messageId);
 
-      // Vérifier si c'est un message privé
+      
       if (message.isPrivate && message.receiver) {
-        // Envoyer la mise à jour seulement à l'expéditeur et au destinataire
+        
         const senderSocketId = this.userSockets.get(message.sender.id);
         const receiverSocketId = this.userSockets.get(message.receiver.id);
 
-        // Mettre à jour pour l'expéditeur
+        
         if (senderSocketId) {
           this.server.to(senderSocketId).emit('messageComment', {
             messageId: message.id,
@@ -167,7 +169,7 @@ export class MessageGateway {
           });
         }
 
-        // Mettre à jour pour le destinataire
+        
         if (receiverSocketId) {
           this.server.to(receiverSocketId).emit('messageComment', {
             messageId: message.id,
@@ -175,7 +177,7 @@ export class MessageGateway {
           });
         }
       } else {
-        // Message public, informer tous les clients
+        
         this.server.emit('messageComment', {
           messageId: message.id,
           comments: message.comments,
@@ -188,14 +190,15 @@ export class MessageGateway {
     }
   }
 
-  // Nouvelle méthode pour demander la liste des utilisateurs connectés
+  
   @SubscribeMessage('getConnectedUsers')
   sendConnectedUsersList(@ConnectedSocket() client: Socket) {
+    console.log('Demande de la liste des utilisateurs connectés reçue');
     const connectedUsers = [];
 
-    // Collecter les infos des utilisateurs connectés
+    
     for (const [userId, socketId] of this.userSockets.entries()) {
-      // Chercher les infos utilisateur depuis les sockets connectés
+      
       const socket = this.server.sockets.sockets.get(socketId);
       console.log(socket)
       if (socket && socket.data.user) {
@@ -207,11 +210,12 @@ export class MessageGateway {
       }
     }
 
-    // Envoyer la liste à l'utilisateur qui l'a demandée
+    console.log('Liste des utilisateurs connectés:', connectedUsers);
+    
     client.emit('connectedUsers', connectedUsers);
   }
 
-  // Helper pour obtenir le socket ID d'un utilisateur
+  
   private getUserSocketId(userId: number): string | undefined {
     return this.userSockets.get(userId);
   }

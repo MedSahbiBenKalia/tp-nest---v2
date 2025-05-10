@@ -23,5 +23,5 @@ export class CvEvent {
   user: User; 
 
   @Column({ type: 'jsonb', nullable: true })
-  payload?: any;         // données supplémentaires si besoin
+  payload?: any;         
 }

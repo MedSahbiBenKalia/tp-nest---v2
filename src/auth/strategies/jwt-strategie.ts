@@ -33,7 +33,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         if (!user) {
             throw new UnauthorizedException("User not found after JWT validation");
         }
-        const { password, salt, ...result } = user; // remove password and salt from the user object
+        const { password, salt, ...result } = user; 
         return result;
     }
     

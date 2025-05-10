@@ -2,7 +2,7 @@ import { Injectable, NestMiddleware } from "@nestjs/common";
 import { verify } from "jsonwebtoken";
 import { NextFunction, Request, Response } from "express";
 import { RequestWithUser } from "../interfaces/request.interface";
-// Extend the Request interface to include the 'userId' property
+
 
 
 @Injectable()

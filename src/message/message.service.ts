@@ -34,7 +34,7 @@ export class MessageService {
     message.sender = sender;
     message.reactions = [];
 
-    // Gestion du message privé
+    
     if (createMessageDto.isPrivate && createMessageDto.receiverId) {
       const receiver = await this.userService.findOne(createMessageDto.receiverId);
       if (!receiver) {
@@ -64,16 +64,16 @@ export class MessageService {
   ): Promise<Message> {
     const message = await this.findOne(messageId);
 
-    // Vérifier si l'utilisateur a déjà réagi
+    
     const existingReactionIndex = message.reactions.findIndex(
       (r) => r.userId === userId,
     );
 
     if (existingReactionIndex >= 0) {
-      // Mettre à jour la réaction existante
+      
       message.reactions[existingReactionIndex].type = reactionDto.type;
     } else {
-      // Ajouter une nouvelle réaction
+      
       message.reactions.push({
         userId,
         type: reactionDto.type,

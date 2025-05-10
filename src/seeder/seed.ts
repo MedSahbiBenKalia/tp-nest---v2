@@ -11,12 +11,12 @@ import { Cv } from '../cv/entities/cv.entity';
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
   
-  // Récupération des services
+  
   const userService = app.get(UserService);
   const skillService = app.get(SkillService);
   const cvService = app.get(CvService);
 
-  // Seed des Users
+  
   const users: User[] = [];
   for (let i = 0; i < 10; i++) {
     users.push(await userService.create({
@@ -26,7 +26,7 @@ async function bootstrap() {
     }));
   }
 
-  // Seed des Skills
+  
   const skills : Skill[] = [];
   for (let i = 0; i < 15; i++) {
     skills.push(await skillService.create({
@@ -34,7 +34,7 @@ async function bootstrap() {
     }));
   }
 
-  // Seed des CVs
+  
   for (const user of users) {
     for (let i = 0; i < 3; i++) {
       await cvService.create({

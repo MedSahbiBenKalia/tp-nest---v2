@@ -19,7 +19,7 @@ export class CvEventController {
   ) {}
 
   @Get()
-  async findAll() { // find all cv events without filtring
+  async findAll() { 
    console.log("find all cv events" , await this.cvEventService.findAll(["cv","user",])); 
     return await this.cvEventService.findAll(["cv","user",]);
 
@@ -47,7 +47,7 @@ export class CvEventController {
   }
 
 
-  @Get(':id') //// find all cv events without filtring
+  @Get(':id') //
   async findOne(@Param('id', new ParseIntPipe()) id: number) {
     return await this.cvEventService.findOne(+id,["cv","user",]);
   }
