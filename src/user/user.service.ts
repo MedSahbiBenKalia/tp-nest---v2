@@ -6,10 +6,11 @@ import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Role } from 'src/enums/role.enum';
+import { AppEventService } from '../events/events.service';
 @Injectable()
 export class UserService extends BaseService<User> {
-  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {
-    super(userRepository);
+  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>,private readonly eventService: AppEventService) {
+    super(userRepository, eventService, 'id');
   }
   async findByUsernameOrEmail(username: string, email: string): Promise<User | null> {
     const user = await this.userRepository.findOne({

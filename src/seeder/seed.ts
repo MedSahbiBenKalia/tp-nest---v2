@@ -20,18 +20,18 @@ async function bootstrap() {
   const users: User[] = [];
   for (let i = 0; i < 10; i++) {
     users.push(await userService.create({
-        name: randFirstName() + randLastName(),
+      name: randFirstName() + randLastName(),
       email: randEmail(),
-      password: randPassword()
-    }));
+      password: randPassword(),
+    })as any);
   }
 
   // Seed des Skills
   const skills : Skill[] = [];
   for (let i = 0; i < 15; i++) {
     skills.push(await skillService.create({
-      designation: randSkill()
-    }));
+      designation: randSkill(),
+    })as any);
   }
 
   // Seed des CVs
@@ -43,12 +43,12 @@ async function bootstrap() {
         userId: user.id,
         job: randJobArea(),
         email: randEmail(),
-        age : Math.floor(Math.random() * 50) + 20,
-        Cin : Math.floor(Math.random() * 10000000) + 1000000,
+        age: Math.floor(Math.random() * 50) + 20,
+        Cin: Math.floor(Math.random() * 10000000) + 1000000,
         skillIds: skills
           .sort(() => 0.5 - Math.random())
           .slice(0, 5)
-          .map(skill => skill.id)
+          .map(skill => skill.id),
       });
     }
   }

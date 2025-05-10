@@ -19,10 +19,10 @@ export class AuthService {
         let user: User;
         try {
             user = await this.userService.create({
-                ...registerUserDto,
-                password: hashedPassword,
-                salt: salt,
-            });
+              ...registerUserDto,
+              password: hashedPassword,
+              salt: salt,
+            })as any;
         } catch (error) {
             throw new ConflictException('User already exists');
         }
