@@ -15,7 +15,14 @@ async function bootstrap() {
       },
     }),
   );
-  app.enableCors();
+  app.enableCors({
+    origin: '*', // Autoriser toutes les origines
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['*'], // Autoriser tous les headers
+    credentials: true, // Désactiver les credentials pour le mode permissif
+    exposedHeaders: ['*'],
+  });
+
   app.enableVersioning({
     type: VersioningType.URI,
     prefix: 'v',
